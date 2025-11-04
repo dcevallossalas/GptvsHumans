@@ -1,0 +1,128 @@
+---
+title: "GPT vs human legal texts annotations: A comparative study with privacy policies (segment-level comparison)"
+author: "David Cevallos-Salas, José Estrada-Jiménez, Danny S. Guamán, David Rodriguez, Jose M. Del Alamo"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(viridis)
+library(kableExtra)
+library(dplyr)
+library(sur)
+library(qqplotr)
+library(DescTools)
+
+palette <- viridis(6, alpha= 1, begin = 1, end = 0.5, direction = -1, option="viridis")
+```
+
+```{r}
+coders = read.csv("E:\\Doctorado\\LLMComplete\\ReplicationPackage\\results\\segments_coders.csv")
+th0 = read.csv("E:\\Doctorado\\LLMComplete\\ReplicationPackage\\results\\segments_th0.csv")
+th08 = read.csv("E:\\Doctorado\\LLMComplete\\ReplicationPackage\\results\\segments_th08.csv")
+th085 = read.csv("E:\\Doctorado\\LLMComplete\\ReplicationPackage\\results\\segments_th085.csv")
+th09 = read.csv("E:\\Doctorado\\LLMComplete\\ReplicationPackage\\results\\segments_th09.csv")
+th095 = read.csv("E:\\Doctorado\\LLMComplete\\ReplicationPackage\\results\\segments_th095.csv")
+```
+
+```{r}
+results = list()
+
+for (coder in 1:10) {
+  for (threshold in 1:5) {
+
+    threshold_value = switch(threshold,0,0.8,0.85,0.9,0.95)
+    human = switch(coder,coders$coder1,coders$coder2,coders$coder3,coders$coder4,coders$coder5,coders$coder6,coders$coder7,coders$coder8,coders$coder9,coders$coder10) 
+    gpt = switch(threshold,
+    switch(coder,th0$coder1,th0$coder2,th0$coder3,th0$coder4,th0$coder5,th0$coder6,th0$coder7,th0$coder8,th0$coder9,th0$coder10),
+    switch(coder,th08$coder1,th08$coder2,th08$coder3,th08$coder4,th08$coder5,th08$coder6,th08$coder7,th08$coder8,th08$coder9,th08$coder10),
+    switch(coder,th085$coder1,th085$coder2,th085$coder3,th085$coder4,th085$coder5,th085$coder6,th085$coder7,th085$coder8,th085$coder9,th085$coder10),
+    switch(coder,th09$coder1,th09$coder2,th09$coder3,th09$coder4,th09$coder5,th09$coder6,th09$coder7,th09$coder8,th09$coder9,th09$coder10),
+    switch(coder,th095$coder1,th095$coder2,th095$coder3,th095$coder4,th095$coder5,th095$coder6,th095$coder7,th095$coder8,th095$coder9,th095$coder10))
+
+    print("----------------------------------------------------------------------")
+    print(paste( "Human annotator", coder, "Threshold", threshold_value, "(H1: GPT < Human)"))
+    print("----------------------------------------------------------------------")
+    print(fligner.test(x=list(gpt,human)))
+    print(wilcox.test(gpt,human,alternative="less"))
+
+    results$coders = c(results$coder,switch(coder,"1","2","3","4","5","6","7","8","9","10"))
+     results$thresholds = c(results$threshold,switch(threshold,"ct = 0","ct = 0.80","ct = 0.85","ct = 0.90","ct = 0.95"))
+    results$pvalues= c(results$pvalues, formatC(round(wilcox.test(gpt,human,alternative="less")$p.value, 3), format = "f", digits = 3))
+  }
+}
+
+
+
+```
+
+
+```{r}
+
+df = data.frame(
+
+Coder  = c(rep("Human annotator 10",10),rep("GPT-4o (ct = 0)",10),rep("GPT-4o (ct = 0.80)",10), rep("GPT-4o (ct = 0.85)",10), rep("GPT-4o (ct = 0.90)",10), rep("GPT-4o (ct = 0.95)",10)),
+  F1 = c(coders$coder10,th0$coder10,th08$coder10,th085$coder10,th09$coder10,th095$coder10)
+)
+
+df$Coder = factor(df$Coder,levels = c("GPT-4o (ct = 0)","GPT-4o (ct = 0.80)","GPT-4o (ct = 0.85)","GPT-4o (ct = 0.90)","GPT-4o (ct = 0.95)","Human annotator 10"))
+
+picture = ggplot(df, aes(x = Coder, y = F1, fill=Coder)) + 
+  stat_boxplot(geom="errorbar", width=0.5)+
+  labs( x= "Annotator", y = "F1-score", color="")+
+  geom_boxplot()+
+  stat_summary(fun = median, geom = "crossbar", width = 0.75, fatten = 0.5, 
+               color = "black", size = 4.5) +
+  #stat_summary(fun.y=mean, geom="point", shape=8, size=2, color="red", fill="red") +
+  #ggtitle("Boxplots de CWWS Score por categoría de nivel actividad física")+
+  theme(plot.title = element_text(hjust = 0.5),legend.position = "none") +
+  scale_fill_manual(values = palette)+
+  scale_colour_manual(values = palette) +
+  #guides(fill=guide_legend(title="Categorías"))+
+  scale_y_continuous(limits=c(0,1))+
+  #geom_jitter(color="red", size=1.5, alpha=1) +
+  #geom_boxplot(outlier.shape = "none")+
+  coord_flip()+
+  theme(
+    axis.title.x = element_text(size = 26), 
+    axis.title.y = element_text(size = 26),  
+    axis.text.x = element_text(size = 26),   
+    axis.text.y = element_text(size = 26) 
+  )
+
+print(picture)
+
+```
+```{r}
+df = data.frame(
+  "X" = results$coders,
+  "Y" = results$thresholds,
+  "Freq" = results$pvalues
+)
+
+df$X = factor(df$X,levels=c("1","2","3","4","5","6","7","8","9","10"))
+df$Y = factor(df$Y,levels=c("ct = 0","ct = 0.80","ct = 0.85","ct = 0.90","ct = 0.95"))
+df$Category <- ifelse(df$Freq < 0.05, "Human annotates better than GPT-4o", "GPT-4o annotates equal or better than Human")
+
+# Crea el heatmap
+heatmap <- ggplot(df, aes(x = X, y = Y, fill = Category)) +
+  geom_tile(color = "black") +
+  geom_text(aes(label = Freq), color = "black", size = 6) +
+  labs(fill = "", x = "Human annotator", y = "GPT-4o") +
+  scale_fill_manual(values = c("Human annotates better than GPT-4o" = palette[6], 
+                                "GPT-4o annotates equal or better than Human" = palette[5])) +
+  theme(axis.text.x = element_text(hjust = 1, size = 18), 
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        strip.text = element_text(size = 18, face = "bold"),
+        legend.text = element_text(size = 15),
+        legend.position = "bottom")
+
+heatmap
+```
+
+
+
