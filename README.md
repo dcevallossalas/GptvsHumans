@@ -1,4 +1,4 @@
-# Ransomware dynamics: Mitigating personal data exfiltration through the SCIRAS lens
+# GPT vs human legal texts annotations: A comparative study with privacy policies
 
 This repository provides all the files and elements required for experiments reproducibility of the research project: "GPT vs human legal texts annotations: A comparative study with privacy policies".
 
