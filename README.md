@@ -48,3 +48,10 @@ The R files use the results obtained through the files of the Analysis folder. F
 - results: GPT-4o and humans' F1-score distributions for the ten categories of privacy practices (resulting files from Analysis.ipynb).
 - results061: GPT-4o and humans' F1-score distributions for the categories of privacy practices with Fleiss' Kappa values greater than 0.61 (resulting files from Analysis_061 ipynb).
 - results075: GPT-4o and humans' F1-score distributions for the categories of privacy practices with Fleiss' Kappa values greater than 0.75 (resulting files from Analysis_075 ipynb).
+
+### Folder Documentation
+
+This folder contains some documentation related to the project and how the study was defined.
+
+- Slides.pdf: Presentation with agreements during all authors' interactions.
+- CorporaAnalysis.xlsx: A study of current corpora for privacy policy annotation and state-of-the-art with key differentiators for the proposed research.
